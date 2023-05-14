@@ -1,23 +1,27 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css"
-          integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ" crossorigin="anonymous">
-  </head>
-  <body>
-    <h3>Introduction</h3>
-    <p>The following writeup contains the analysis and key generator solution
-       for the Windows PE file KeyChecker.exe. The binary was pulled from the
-       crackmes.one website under "Easy v0.1 by frontegg."</p>
-    <p>Static binary analysis with Ghidra was used to analyze and reverse the
-       algorithm for verifying a valid input key. The algorithm was then
-       implemented in a key generator program to produce valid keys to "crack"
-       the program.</p>
-    <h3>main Function</h3>
-    <p>The action of prompting a user for a key is performed in the main
-       function. The code below uses <code>std::cout</code> to output
-       the read only string "enter key: " to the user.</p>
-    <pre>
+   <head>
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ"
+      crossorigin="anonymous">
+   </head>
+   <body class="text-bg-dark">
+      <main class="container">
+         <div class="p-4 p-md-5 mb-4">
+      <h3>Introduction</h3>
+      <p>The following writeup contains the analysis and key generator solution
+      for the Windows PE file KeyChecker.exe. The binary was pulled from the
+      crackmes.one website under "Easy v0.1 by frontegg."</p>
+      <p>Static binary analysis with Ghidra was used to analyze and reverse the
+      algorithm for verifying a valid input key. The algorithm was then
+      implemented in a key generator program to produce valid keys to "crack"
+      the program.</p>
+      <h3>main Function</h3>
+      <p>The action of prompting a user for a key is performed in the main
+      function. The code below uses <code>std::cout</code> to output
+      the read only string "enter key: " to the user.</p>
+      <pre>
       <code>
 ...
 140e:	48 8d 15 13 	lea    rdx,[rip+0x3013]
@@ -33,32 +37,32 @@
 142f:	00 00
 ...
       </code>
-    </pre>
-    <p>The code at 0x1433 to 0x143b has the telltale signs of a Micorsoft
-       Visual Studio C++ compiler produced local (stack)
-       <code>std::string</code>. The binary is a 64 bit executable and thus
-       pointers and address spaces are 8 bytes. The stack references for the
-       memory addresses have 16 bytes between the first two, RBP-0x21 and
-       RBP-0x11. This the space allocated for storing the character array
-       of small strings (15 bytes or less). Only if the string requires more
-       than 15 bytes for its character array will a heap allocation occur and
-       a pointer be used to store and address the now heap allocated memory
-       for the character array.</p>
-    <p>The second memory address, RBP-0x11, is used to store the length of
-       the populated character array. This is a different value than the third
-       memory address, RBP-0x9, which stores the capacity. The capacity holds
-       the value for the current maximum space reserved for the string instance.
-       The three values taken together are a local <code>std::string</code>
-       instance.</p>
-    <p>The <code>std::string</code> instance is initialized with a length of 0,
-       an empty character array, and a capacity of 15. The capacity of 15
-       accounts for the 16 bytes reserved for small strings from RBP-0x21 to
-       RBP-0x11. (C strings are NULL terminated)</p>
-    <p><code>std::cin</code> is used to take user input and populate the
-       <code>std::string</code> instance at RBP-0x21. Going forward I will
-       refer to the <code>std::string</code> instance at RBP-0x21 as the
-       variable <code>key</code>.</p>
-    <pre>
+      </pre>
+      <p>The code at 0x1433 to 0x143b has the telltale signs of a Micorsoft
+      Visual Studio C++ compiler produced local (stack)
+      <code>std::string</code>. The binary is a 64 bit executable and thus
+      pointers and address spaces are 8 bytes. The stack references for the
+      memory addresses have 16 bytes between the first two, RBP-0x21 and
+      RBP-0x11. This the space allocated for storing the character array
+      of small strings (15 bytes or less). Only if the string requires more
+      than 15 bytes for its character array will a heap allocation occur and
+      a pointer be used to store and address the now heap allocated memory
+      for the character array.</p>
+      <p>The second memory address, RBP-0x11, is used to store the length of
+      the populated character array. This is a different value than the third
+      memory address, RBP-0x9, which stores the capacity. The capacity holds
+      the value for the current maximum space reserved for the string instance.
+      The three values taken together are a local <code>std::string</code>
+      instance.</p>
+      <p>The <code>std::string</code> instance is initialized with a length of 0,
+      an empty character array, and a capacity of 15. The capacity of 15
+      accounts for the 16 bytes reserved for small strings from RBP-0x21 to
+      RBP-0x11. (C strings are NULL terminated)</p>
+      <p><code>std::cin</code> is used to take user input and populate the
+      <code>std::string</code> instance at RBP-0x21. Going forward I will
+      refer to the <code>std::string</code> instance at RBP-0x21 as the
+      variable <code>key</code>.</p>
+      <pre>
       <code>
 ...
 1431:	33 f6          	xor    esi,esi
@@ -74,12 +78,12 @@
 1456:	00
 ...
       </code>
-    </pre>
-    <p>Another <code>std::string</code> instance is found on the stack at
-       address RBP-0x41. This <code>std::string</code> instance will hold a
-       copy of the user input <code>key</code>. To simplify discussion, I will
-       call this <code>std::string</code> instance <code>s</code>.</p>
-    <pre>
+      </pre>
+      <p>Another <code>std::string</code> instance is found on the stack at
+      address RBP-0x41. This <code>std::string</code> instance will hold a
+      copy of the user input <code>key</code>. To simplify discussion, I will
+      call this <code>std::string</code> instance <code>s</code>.</p>
+      <pre>
       <code>
 ...
 1457:	48 89 75 bf    	mov    QWORD PTR [rbp-0x41],rsi
@@ -87,14 +91,14 @@
 145f:	48 89 75 d7    	mov    QWORD PTR [rbp-0x29],rsi
 ...
       </code>
-    </pre>
-    <p>After copying the contents of <code>key</code> to <code>s</code>, the
-       length is compared to the value 19. Remember the length is the number of
-       bytes in the populated character array. If the length is found to be 
-       19, execution continues via the jump at 0x154c. If the length is not 19,
-       execution pauses via the call to <code>system("pause")</code> before
-       performing cleanup and returning from main.</p>
-    <pre>
+      </pre>
+      <p>After copying the contents of <code>key</code> to <code>s</code>, the
+      length is compared to the value 19. Remember the length is the number of
+      bytes in the populated character array. If the length is found to be 
+      19, execution continues via the jump at 0x154c. If the length is not 19,
+      execution pauses via the call to <code>system("pause")</code> before
+      performing cleanup and returning from main.</p>
+      <pre>
       <code>
 ...
 1548:	41 83 ff 13    	cmp    r15d,0x13
@@ -105,12 +109,12 @@
 1559:	00 00
 ...
       </code>
-    </pre>
-    <p>After passing the length check, the difference between the second
-       (index 1) and third (index 2) characters of <code>s</code> is taken.
-       The difference is compared to the value 4. If the difference is greater
-       than or equal to 4, "error" is output to the user and main returns.</p>
-    <pre>
+      </pre>
+      <p>After passing the length check, the difference between the second
+      (index 1) and third (index 2) characters of <code>s</code> is taken.
+      The difference is compared to the value 4. If the difference is greater
+      than or equal to 4, "error" is output to the user and main returns.</p>
+      <pre>
       <code>
 ...
 1560:	48 8d 4d bf     lea    rcx,[rbp-0x41]
@@ -126,12 +130,12 @@
 1585:	00 00
 ...
       </code>
-    </pre>
-    <p>The difference between the 6th and 10th characters is calculated and
-       compared to 75. If the difference is less than 75, execution continues.
-       If the difference is greater than or equal to 75, "error" is output
-       to the user and main returns.</p>
-    <pre>
+      </pre>
+      <p>The difference between the 6th and 10th characters is calculated and
+      compared to 75. If the difference is less than 75, execution continues.
+      If the difference is greater than or equal to 75, "error" is output
+      to the user and main returns.</p>
+      <pre>
       <code>
 ...
 1587:	48 8d 4d bf     lea    rcx,[rbp-0x41]
@@ -147,12 +151,12 @@
 15ac:	00 00
 ...
       </code>
-    </pre>
-    <p>The next key validation check is performed with the 12th, 1st, and 17th
-       characters in <code>s</code>. The sum of the 12th character plus 1 and
-       the 1st character must be equal to double the value of the 17th
-       character.</p>
-    <pre>
+      </pre>
+      <p>The next key validation check is performed with the 12th, 1st, and 17th
+      characters in <code>s</code>. The sum of the 12th character plus 1 and
+      the 1st character must be equal to double the value of the 17th
+      character.</p>
+      <pre>
       <code>
 ...
 15ae:	48 8d 4d bf    	lea    rcx,[rbp-0x41]
@@ -174,9 +178,9 @@
 15e2:	00 00
 ...
       </code>
-    </pre>
-    <p>The 19th character is checked if it is an even number (byte value).</p>
-    <pre>
+      </pre>
+      <p>The 19th character is checked if it is an even number (byte value).</p>
+      <pre>
       <code>
 ...
 15e4:	48 8d 45 bf    	lea    rax,[rbp-0x41]
@@ -187,12 +191,12 @@
 15f8:	00 00
 ...
       </code>
-    </pre>
-    <p>The 18th character is checked to be odd. There is also a check and a
-       conversion to "isolate" the least significant byte if the byte value is
-       signed (negative) before checking if the value is odd. Note, printable
-       ASCII characters are all positive values.</p>
-    <pre>
+      </pre>
+      <p>The 18th character is checked to be odd. There is also a check and a
+      conversion to "isolate" the least significant byte if the byte value is
+      signed (negative) before checking if the value is odd. Note, printable
+      ASCII characters are all positive values.</p>
+      <pre>
       <code>
 ...
 15fa:	48 8d 45 bf     lea    rax,[rbp-0x41]
@@ -210,10 +214,10 @@
 1620:	00 00
 ...
       </code>
-    </pre>
-    <p>The 5th, 10th, and 15th characters are checked to be equal to the value
-       of 45 or the '-' character.</p>
-    <pre>
+      </pre>
+      <p>The 5th, 10th, and 15th characters are checked to be equal to the value
+      of 45 or the '-' character.</p>
+      <pre>
       <code>
 ...
 1622:	48 8d 45 bf     lea    rax,[rbp-0x41]
@@ -236,11 +240,11 @@
 1662:	00 00
 ...
       </code>
-    </pre>
-    <p>The 17th character is converted to a <code>double</code> from a
-       <code>char</code>. The <code>sqrt</code> of the converted character is
-       performed and stored in the XMM8 register.</p>
-    <pre>
+      </pre>
+      <p>The 17th character is converted to a <code>double</code> from a
+      <code>char</code>. The <code>sqrt</code> of the converted character is
+      performed and stored in the XMM8 register.</p>
+      <pre>
       <code>
 ...
 1664:	48 8d 45 bf    	lea    rax,[rbp-0x41]
@@ -261,11 +265,11 @@
 1694:	44 0f 28 c0    	movaps xmm8,xmm0
 ...
       </code>
-    </pre>
-    <p>The same conversion to a <code>double</code> and <code>sqrt</code> is
-       performed for the 18th character. The resulting value is stored in the
-       XMM6 register.</p>
-    <pre>
+      </pre>
+      <p>The same conversion to a <code>double</code> and <code>sqrt</code> is
+      performed for the 18th character. The resulting value is stored in the
+      XMM6 register.</p>
+      <pre>
       <code>
 ...
 1698:	48 8d 45 bf    	lea    rax,[rbp-0x41]
@@ -278,10 +282,10 @@
 16c4:	0f 28 f0       	movaps xmm6,xmm0
 ...
       </code>
-    </pre>
-    <p>The 14th character has the same operations performed and the result is
-       stored in the XMM7 register.</p>
-    <pre>
+      </pre>
+      <p>The 14th character has the same operations performed and the result is
+      stored in the XMM7 register.</p>
+      <pre>
       <code>
 ...
 16c7:	48 8d 45 bf    	lea    rax,[rbp-0x41]
@@ -294,10 +298,10 @@
 16f3:	0f 28 f8       	movaps xmm7,xmm0
 ...
       </code>
-    </pre>
-    <p>The 4th character has the same operations performed and the result is
-       stored in the XMM0 register.</p>
-    <pre>
+      </pre>
+      <p>The 4th character has the same operations performed and the result is
+      stored in the XMM0 register.</p>
+      <pre>
       <code>
 ...
 16f6:	48 8d 45 bf    	lea    rax,[rbp-0x41]
@@ -308,10 +312,10 @@
 1717:	66 0f 51 c0    	sqrtpd xmm0,xmm0
 ...
       </code>
-    </pre>
-    <p>The sum of the XMM6 and XMM8 registers from above must be greater than
-       the sum of the XMM0 and XMM7 registers from above.</p>
-    <pre>
+      </pre>
+      <p>The sum of the XMM6 and XMM8 registers from above must be greater than
+      the sum of the XMM0 and XMM7 registers from above.</p>
+      <pre>
       <code>
 ...
 1722:	f2 41 0f 58     addsd  xmm6,xmm8
@@ -322,11 +326,11 @@
 1733:	00 00
 ...
       </code>
-    </pre>
-    <p>The <code>s</code> <code>std::string</code> instance is then copied to
-       a <code>std::string</code> instance on the stack at address RBP-0x69.
-       I will refer to the copy of <code>s</code> as <code>s1</code>.</p>
-    <pre>
+      </pre>
+      <p>The <code>s</code> <code>std::string</code> instance is then copied to
+      a <code>std::string</code> instance on the stack at address RBP-0x69.
+      I will refer to the copy of <code>s</code> as <code>s1</code>.</p>
+      <pre>
       <code>
 ...
 1735:	48 89 75 97     mov    QWORD PTR [rbp-0x69],rsi
@@ -336,14 +340,14 @@
 174d:	0f 00 00 00
 ...
       </code>
-    </pre>
-    <p>Depending if a heap allocation was required for <code>s1</code>, one
-       of the two code paths is taken that calls the validation function at
-       0x1290. Knowing the length of <code>s1</code> is 19 and thus greater
-       than the initial capacity of 15, the second code block below
-       (0x180b - 0x1813) is the code path taken. The only parameter to the
-       fuction is <code>s1</code>.</p>
-    <pre>
+      </pre>
+      <p>Depending if a heap allocation was required for <code>s1</code>, one
+      of the two code paths is taken that calls the validation function at
+      0x1290. Knowing the length of <code>s1</code> is 19 and thus greater
+      than the initial capacity of 15, the second code block below
+      (0x180b - 0x1813) is the code path taken. The only parameter to the
+      fuction is <code>s1</code>.</p>
+      <pre>
       <code>
 ...
 176d:	48 8d 4d 97    	lea    rcx,[rbp-0x69]
@@ -351,8 +355,8 @@
 1775:	ff
 ...
       </code>
-    </pre>
-    <pre>
+      </pre>
+      <pre>
       <code>
 ...
 180b:	48 8d 4d 97    	lea    rcx,[rbp-0x69]
@@ -360,12 +364,12 @@
 1813:	ff
 ...
       </code>
-    </pre>
-    <p>Before investigating the validation function, the code below displays
-       the "error" message printing code that was discussed previously. The
-       code block is jumped to if any of the validations discussed above were
-       found to not be true.</p>
-    <pre>
+      </pre>
+      <p>Before investigating the validation function, the code below displays
+      the "error" message printing code that was discussed previously. The
+      code block is jumped to if any of the validations discussed above were
+      found to not be true.</p>
+      <pre>
       <code>
 ...
 1816:	48 8d 15 1f 	lea    rdx,[rip+0x2c1f]
@@ -376,13 +380,13 @@
 1828:	00
 ...
       </code>
-    </pre>
-    <h3>Validation Function</h3>
-    <p>The RCX register contains the address of <code>s1</code> passed to the
-       function as the one and only parameter. That value is copied to the RBX
-       register and a location on the stack at RSP+0x20. The capacity of
-       <code>s1</code> is also copied to the RDX register.</p>
-    <pre>
+      </pre>
+      <h3>Validation Function</h3>
+      <p>The RCX register contains the address of <code>s1</code> passed to the
+      function as the one and only parameter. That value is copied to the RBX
+      register and a location on the stack at RSP+0x20. The capacity of
+      <code>s1</code> is also copied to the RDX register.</p>
+      <pre>
       <code>
 ...
 12a5:	48 8b d9        mov    rbx,rcx
@@ -391,15 +395,15 @@
 12ad:	48 8b 51 18     mov    rdx,QWORD PTR [rcx+0x18]
 ...
       </code>
-    </pre>
-    <p>The capacity is compared to 16 and a jump occurs if the value is less
-       than 16. The capacity is greater than 16 since the length is 19. The
-       jump is not taken.</p>
-    <p>The address of the 16th, 12th, and 9th characters are copied to
-       registers. The 16th is copied to R11, the 12th is copied to RCX, and
-       the 9th is copied to R9. The 1st character's address is copied to
-       R10 and R8.</p>
-    <pre>
+      </pre>
+      <p>The capacity is compared to 16 and a jump occurs if the value is less
+      than 16. The capacity is greater than 16 since the length is 19. The
+      jump is not taken.</p>
+      <p>The address of the 16th, 12th, and 9th characters are copied to
+      registers. The 16th is copied to R11, the 12th is copied to RCX, and
+      the 9th is copied to R9. The 1st character's address is copied to
+      R10 and R8.</p>
+      <pre>
       <code>
 ...
 12b1:	48 83 fa 10     cmp    rdx,0x10
@@ -413,13 +417,13 @@
 12cc:	eb 12           jmp    0x12e0
 ...
       </code>
-    </pre>
-    <p>The code listing below performs arthimetic operations on the above
-       mentioned registers. The resulting value of the arthimetic operations
-       must be greater than 25 to reach the correct output message. If the
-       result is less than or equal to 25, the function simply returns (after
-       some cleanup).</p>
-    <pre>
+      </pre>
+      <p>The code listing below performs arthimetic operations on the above
+      mentioned registers. The resulting value of the arthimetic operations
+      must be greater than 25 to reach the correct output message. If the
+      result is less than or equal to 25, the function simply returns (after
+      some cleanup).</p>
+      <pre>
       <code>
 ...
 12e0:	0f be 01       	movsx  eax,BYTE PTR [rcx]
@@ -436,20 +440,20 @@
 12ff:	7e 62          	jle    0x1363
 ...
       </code>
-    </pre>
-    <p>The pseudo code below shows the arithmetic operations and the respective
-       characters in <code>s1</code> used from the code listing above. The
-       equation must be true for execution to continue.</p>
-    <pre>
+      </pre>
+      <p>The pseudo code below shows the arithmetic operations and the respective
+      characters in <code>s1</code> used from the code listing above. The
+      equation must be true for execution to continue.</p>
+      <pre>
       <code>
-  s1[15] - s1[11] - s1[14] + s1[8] + s1[0] > 25
+      s1[15] - s1[11] - s1[14] + s1[8] + s1[0] > 25
       </code>
-    </pre>
-    <p>The 16th, 1st, 12th, 15th, and 9th characters in <code>s1</code> are
-       used in another equation. The result must be less than 140 to continue
-       execution to an output message. If the result is greater than or equal
-       to 140, the function simply returns.</p>
-    <pre>
+      </pre>
+      <p>The 16th, 1st, 12th, 15th, and 9th characters in <code>s1</code> are
+      used in another equation. The result must be less than 140 to continue
+      execution to an output message. If the result is greater than or equal
+      to 140, the function simply returns.</p>
+      <pre>
       <code>
 ...
 1307:	48 8b 03       	mov    rax,QWORD PTR [rbx]
@@ -473,18 +477,18 @@
 134d:	7d 14           jge    0x1363
 ...
       </code>
-    </pre>
-    <p>The equation from the code listing above that needs to be true is shown
-       below.</p>
-    <pre>
+      </pre>
+      <p>The equation from the code listing above that needs to be true is shown
+      below.</p>
+      <pre>
       <code>
-  s1[0] - s1[14] - s1[11] + s1[15] + s1[8] < 140
+      s1[0] - s1[14] - s1[11] + s1[15] + s1[8] < 140
       </code>
-    </pre>
-    <p>If the two equations discussed above are true, the read only string
-       "asd" is output to the user. Since this is a key validation program, I
-       assume this is to be interpreted as the correct message.</p>
-    <pre>
+      </pre>
+      <p>If the two equations discussed above are true, the read only string
+      "asd" is output to the user. Since this is a key validation program, I
+      assume this is to be interpreted as the correct message.</p>
+      <pre>
       <code>
 ...
 134f:	48 8d 15 ce 	lea    rdx,[rip+0x30ce]
@@ -495,26 +499,30 @@
 1361:	00
 ...
       </code>
-    </pre>
-    <h3>Key Generator</h3>
-    <p>The length of the key must be 19 bytes. The remaining criteria that must
-       be satisified to produce the "asd" message is displayed below. Assume
-       the variable <code>key</code> is the user input key.</p>
-    <pre>
+      </pre>
+      <h3>Key Generator</h3>
+      <p>The length of the key must be 19 bytes. The remaining criteria that must
+      be satisified to produce the "asd" message is displayed below. Assume
+      the variable <code>key</code> is the user input key.</p>
+      <pre>
       <code>
-  key[1] - key[2] < 4
-  key[5] - key[9] < 75
-  key[11] + 1 + key[0] == 2 * key[16]
-  key[18] must be even
-  key[17] must be positive and odd
-  key[4] == 45 // '-'
-  key[9] == 45 // '-'
-  key[14] == 45 // '-'
-  sqrt(key[17]) + sqrt(key[16]) >
-      sqrt(key[3]) + sqrt(key[13])
-  key[15] - key[11] - key[14] + key[8] + key[0] > 25
-  key[0] - key[14] - key[11] + key[15] + key[8] < 140
+key[1] - key[2] < 4
+key[5] - key[9] < 75
+key[11] + 1 + key[0] == 2 * key[16]
+key[18] must be even
+key[17] must be positive and odd
+key[4] == 45 // '-'
+key[9] == 45 // '-'
+key[14] == 45 // '-'
+sqrt(key[17]) + sqrt(key[16]) >
+sqrt(key[3]) + sqrt(key[13])
+key[15] - key[11] - key[14] + key[8] + key[0] > 25
+key[0] - key[14] - key[11] + key[15] + key[8] < 140
       </code>
-    </pre>
-  </body>
+      </pre>
+      <p>A C source implementation can be found at
+   <a href="https://github.com/devnull850/blogs/blob/analysis-keychecker-exe/keygen.c">keygen.c</a>.</p>
+         </div>
+      </main>
+   </body>
 </html>
